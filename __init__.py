@@ -19,25 +19,34 @@ mydb = mysql.connector.connect(
 def index():
         if request.method == 'POST':
                 mycursor = mydb.cursor()
-                insert_stmt = (
-                        "update sentence set poem=%s"
-                )
                 message = request.form["memo"]
-                mycursor.execute(insert_stmt,(message,))
-                select_stmt = "SELECT * FROM sentence WHERE poem = %(poem)s"                
-                mycursor.execute(select_stmt, { 'poem': message })
-                myresult = mycursor.fetchall()
-                message = myresult
-                message2 = print(message)
+                insert_stmt = ("select exists ( select * from sentence where id = 1)")
+                insert_stmt2 = ("insert into sentence (poem)" "values (%s)")
+                insert_stmt3 = ("update sentence set poem = %s where id = 1")
+                mycursor.execute(insert_stmt)
+                content = mycursor.fetchone()
+                if content == None:
+                        mycursor.execute(insert_stmt2,(message,))
+                else:
+                        mycursor.execute(insert_stmt3,(message,))
                 mydb.commit()
-                mydb.close()
-                return render_template('index.html', message=message, message2=message2)
+                select_stmt = "SELECT poem FROM sentence WHERE poem = %(poem)s"                
+                mycursor.execute(select_stmt, { 'poem': message })
+                myresult = mycursor.fetchone()
+                message = str(myresult[0])
+                mycursor.execute('SELECT updatetime FROM sentence where id = 1')
+                myresult2 = mycursor.fetchone()
+                updatetime = str(myresult2[0])
+                return render_template('index.html', message=message, update_date=updatetime)
         else:
                 mycursor = mydb.cursor()
-                mycursor.execute('SELECT poem FROM sentence')
-                myresult = mycursor.fetchall()
-                message = myresult
-                return render_template('index.html', message=message)
+                mycursor.execute('SELECT poem FROM sentence where id = 1')
+                myresult = mycursor.fetchone()
+                message = str(myresult[0])
+                mycursor.execute('SELECT updatetime FROM sentence where id = 1')
+                myresult2 = mycursor.fetchone()
+                updatetime = str(myresult2[0])
+                return render_template('index.html', message=message, update_date=updatetime)
 
 
 
